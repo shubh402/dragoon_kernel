@@ -906,6 +906,10 @@ extern bool efi_poweroff_required(void);
 	     (md) <= (efi_memory_desc_t *)((m)->map_end - (m)->desc_size); \
 	     (md) = (void *)(md) + (m)->desc_size)
 
+struct key;
+extern int __init parse_efi_signature_list(const void *data, size_t size,
+					   struct key *keyring);
+
 /**
  * efi_range_is_wc - check the WC bit on an address range
  * @start: starting kvirt address
