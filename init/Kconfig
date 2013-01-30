@@ -1135,7 +1135,7 @@ config DEBUG_BLK_CGROUP
 endif # CGROUPS
 
 config CHECKPOINT_RESTORE
-	bool "Checkpoint/restore support" if EXPERT
+	bool "Checkpoint/restore support"
 	default n
 	help
 	  Enables additional kernel features in a sake of checkpoint/restore.
@@ -1146,7 +1146,7 @@ config CHECKPOINT_RESTORE
 	  If unsure, say N here.
 
 menuconfig NAMESPACES
-	bool "Namespaces support" if EXPERT
+	bool "Namespaces support"
 	default !EXPERT
 	help
 	  Provides the way to make tasks work with different objects using
