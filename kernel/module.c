@@ -108,9 +108,9 @@ struct list_head *kdb_modules = &modules; /* kdb needs the list of modules */
 
 #ifdef CONFIG_MODULE_SIG
 #ifdef CONFIG_MODULE_SIG_FORCE
-static bool sig_enforce = true;
+bool sig_enforce = true;
 #else
-static bool sig_enforce = false;
+bool sig_enforce = false;
 
 static int param_set_bool_enable_only(const char *val,
 				      const struct kernel_param *kp)
