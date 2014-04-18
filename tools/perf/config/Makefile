@@ -52,6 +52,10 @@ ifeq ($(ARCH),powerpc)
   CFLAGS += -DHAVE_SKIP_CALLCHAIN_IDX
 endif
 
+ifneq ($(ARCH),x86)
+  NO_LIBDW_DWARF_UNWIND := 1
+endif
+
 ifeq ($(LIBUNWIND_LIBS),)
   NO_LIBUNWIND := 1
 else
