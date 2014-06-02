@@ -642,7 +642,11 @@ endif
 ifeq ($(IS_X86_64),1)
 lib = lib64
 else
+ifdef MULTILIBDIR
+lib = $(MULTILIBDIR)
+else
 lib = lib
+endif
 endif
 libdir = $(prefix)/$(lib)
 
