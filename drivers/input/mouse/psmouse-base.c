@@ -35,6 +35,7 @@
 #include "elantech.h"
 #include "sentelic.h"
 #include "cypress_ps2.h"
+#include "focaltech.h"
 
 #define DRIVER_DESC	"PS/2 mouse driver"
 
@@ -722,6 +723,13 @@ static int psmouse_extensions(struct psmouse *psmouse,
 {
 	bool synaptics_hardware = false;
 
+/* Always check for focaltech, this is safe as it uses pnp-id matching */
+	if (psmouse_do_detect(focaltech_detect, psmouse, set_properties) == 0) {
+		/* Not supported yet, use bare protocol */
+		psmouse_max_proto = max_proto = PSMOUSE_PS2;
+		goto reset_to_defaults;
+	}
+
 /*
  * We always check for lifebook because it does not disturb mouse
  * (it only checks DMI information).
@@ -872,6 +880,8 @@ static int psmouse_extensions(struct psmouse *psmouse,
 			max_proto = PSMOUSE_IMEX;
 		}
 	}
+
+reset_to_defaults:
 
 /*
  * Reset to defaults in case the device got confused by extended
