@@ -88,6 +88,100 @@ ext4_unaligned_aio(struct inode *inode, struct iov_iter *from, loff_t pos)
 	return 0;
 }
 
+/**
+ * copy of __generic_file_write_iter with explicit O_DIRECT status
+ * @iocb:	IO state structure (file, offset, etc.)
+ * @from:	iov_iter with data to write
+ * @direct:	perform O_DIRECT IO
+ */
+static ssize_t
+__ext4_file_write_iter(struct kiocb *iocb, struct iov_iter *from, int direct)
+{
+	struct file *file = iocb->ki_filp;
+	struct address_space *mapping = file->f_mapping;
+	struct inode	*inode = mapping->host;
+	loff_t		pos = iocb->ki_pos;
+	ssize_t		written = 0;
+	ssize_t		err;
+	ssize_t		status;
+	size_t		count = iov_iter_count(from);
+
+	/* We can write back this queue in page reclaim */
+	current->backing_dev_info = mapping->backing_dev_info;
+	err = generic_write_checks(file, &pos, &count, S_ISBLK(inode->i_mode));
+	if (err)
+		goto out;
+
+	if (count == 0)
+		goto out;
+
+	iov_iter_truncate(from, count);
+
+	err = file_remove_suid(file);
+	if (err)
+		goto out;
+
+	err = file_update_time(file);
+	if (err)
+		goto out;
+
+	/* coalesce the iovecs and go direct-to-BIO for O_DIRECT */
+	if (unlikely(direct)) {
+		loff_t endbyte;
+
+		written = generic_file_direct_write(iocb, from, pos);
+		if (written < 0 || written == count)
+			goto out;
+
+		/*
+		 * direct-io write to a hole: fall through to buffered I/O
+		 * for completing the rest of the request.
+		 */
+		pos += written;
+		count -= written;
+
+		status = generic_perform_write(file, from, pos);
+		/*
+		 * If generic_perform_write() returned a synchronous error
+		 * then we want to return the number of bytes which were
+		 * direct-written, or the error code if that was zero.  Note
+		 * that this differs from normal direct-io semantics, which
+		 * will return -EFOO even if some bytes were written.
+		 */
+		if (unlikely(status < 0)) {
+			err = status;
+			goto out;
+		}
+		iocb->ki_pos = pos + status;
+		/*
+		 * We need to ensure that the page cache pages are written to
+		 * disk and invalidated to preserve the expected O_DIRECT
+		 * semantics.
+		 */
+		endbyte = pos + status - 1;
+		err = filemap_write_and_wait_range(file->f_mapping, pos,
+						   endbyte);
+		if (err == 0) {
+			written += status;
+			invalidate_mapping_pages(mapping,
+						 pos >> PAGE_CACHE_SHIFT,
+						 endbyte >> PAGE_CACHE_SHIFT);
+		} else {
+			/*
+			 * We don't know how much we wrote, so just return
+			 * the number of bytes which were direct-written
+			 */
+		}
+	} else {
+		written = generic_perform_write(file, from, pos);
+		if (likely(written >= 0))
+			iocb->ki_pos = pos + written;
+	}
+out:
+	current->backing_dev_info = NULL;
+	return written ? written : err;
+}
+
 static ssize_t
 ext4_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
 {
@@ -172,7 +266,7 @@ ext4_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
 		}
 	}
 
-	ret = __generic_file_write_iter(iocb, from);
+	ret = __ext4_file_write_iter(iocb, from, o_direct);
 	mutex_unlock(&inode->i_mutex);
 
 	if (ret > 0) {
