@@ -505,7 +505,15 @@ static struct dmi_system_id video_dmi_table[] __initdata = {
 		DMI_MATCH(DMI_PRODUCT_NAME, "HP ENVY 15 Notebook PC"),
 		},
 	},
-
+	{
+	 /* https://bugzilla.redhat.com/show_bug.cgi?id=1094948 */
+	 .callback = video_disable_native_backlight,
+	 .ident = "SAMSUNG 730U3E/740U3E",
+	 .matches = {
+		DMI_MATCH(DMI_SYS_VENDOR, "SAMSUNG ELECTRONICS CO., LTD."),
+		DMI_MATCH(DMI_PRODUCT_NAME, "730U3E/740U3E"),
+		},
+	},
 	{
 	 .callback = video_disable_native_backlight,
 	 .ident = "SAMSUNG 870Z5E/880Z5E/680Z5E",
