@@ -51,7 +51,7 @@ struct i915_params i915 __read_mostly = {
 	.disable_vtd_wa = 0,
 	.use_mmio_flip = 0,
 	.mmio_debug = 0,
-	.verbose_state_checks = 1,
+	.verbose_state_checks = 0,
 	.nuclear_pageflip = 0,
 };
 
