@@ -2440,6 +2440,7 @@ intel_find_plane_obj(struct intel_crtc *intel_crtc,
 
 	if (intel_alloc_plane_obj(intel_crtc, plane_config)) {
 		intel_crtc->base.primary->state->crtc = &intel_crtc->base;
+		intel_crtc->base.primary->crtc = &intel_crtc->base;
 		update_state_fb(intel_crtc->base.primary);
 		return;
 	}
@@ -2471,6 +2472,7 @@ intel_find_plane_obj(struct intel_crtc *intel_crtc,
 			drm_framebuffer_reference(c->primary->fb);
 			intel_crtc->base.primary->fb = c->primary->fb;
 			intel_crtc->base.primary->state->crtc = &intel_crtc->base;
+			intel_crtc->base.primary->crtc = &intel_crtc->base;
 			obj->frontbuffer_bits |= INTEL_FRONTBUFFER_PRIMARY(intel_crtc->pipe);
 			break;
 		}
