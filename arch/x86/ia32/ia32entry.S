@@ -119,7 +119,7 @@ ENTRY(ia32_sysenter_target)
 	 * it is too small to ever cause noticeable irq latency.
 	 */
 	SWAPGS_UNSAFE_STACK
-	movq	PER_CPU_VAR(cpu_tss + TSS_sp0), %rsp
+	movq	PER_CPU_VAR(cpu_current_top_of_stack), %rsp
 	ENABLE_INTERRUPTS(CLBR_NONE)
 
 	/* Zero-extending 32-bit regs, do not remove */
@@ -356,7 +356,7 @@ ENTRY(ia32_cstar_target)
 	SWAPGS_UNSAFE_STACK
 	movl	%esp,%r8d
 	CFI_REGISTER	rsp,r8
-	movq	PER_CPU_VAR(cpu_tss + TSS_sp0),%rsp
+	movq	PER_CPU_VAR(cpu_current_top_of_stack),%rsp
 	ENABLE_INTERRUPTS(CLBR_NONE)
 
 	/* Zero-extending 32-bit regs, do not remove */
