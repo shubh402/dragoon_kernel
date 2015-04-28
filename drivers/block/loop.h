@@ -57,6 +57,7 @@ struct loop_device {
 	struct list_head	write_cmd_head;
 	struct work_struct	write_work;
 	bool			write_started;
+	atomic_t		pending_per_work_io;
 	int			lo_state;
 	struct mutex		lo_ctl_mutex;
 
@@ -68,6 +69,7 @@ struct loop_device {
 struct loop_cmd {
 	struct work_struct read_work;
 	struct request *rq;
+	bool per_work_io;
 	struct list_head list;
 };
 
