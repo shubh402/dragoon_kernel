@@ -1425,13 +1425,24 @@ static int loop_queue_rq(struct blk_mq_hw_ctx *hctx,
 		const struct blk_mq_queue_data *bd)
 {
 	struct loop_cmd *cmd = blk_mq_rq_to_pdu(bd->rq);
+	struct loop_device *lo = cmd->rq->q->queuedata;
+	bool single_queue = !!(cmd->rq->cmd_flags & REQ_WRITE);
+
+	/*
+	 * Fallback to single queue mode if the pending per work
+	 * I/O number reaches 32, otherwise too many high priority
+	 * worker thread may effect system performance as reported
+	 * in fedora live booting from squashfs over loop.
+	 */
+	if (atomic_read(&lo->pending_per_work_io) >= 32)
+		single_queue = true;
 
 	blk_mq_start_request(bd->rq);
 
-	if (cmd->rq->cmd_flags & REQ_WRITE) {
-		struct loop_device *lo = cmd->rq->q->queuedata;
+	if (single_queue) {
 		bool need_sched = true;
 
+		cmd->per_work_io = false;
 		spin_lock_irq(&lo->lo_lock);
 		if (lo->write_started)
 			need_sched = false;
@@ -1443,6 +1454,8 @@ static int loop_queue_rq(struct blk_mq_hw_ctx *hctx,
 		if (need_sched)
 			queue_work(loop_wq, &lo->write_work);
 	} else {
+		cmd->per_work_io = true;
+		atomic_inc(&lo->pending_per_work_io);
 		queue_work(loop_wq, &cmd->read_work);
 	}
 
@@ -1467,6 +1480,8 @@ static void loop_handle_cmd(struct loop_cmd *cmd)
 	if (ret)
 		cmd->rq->errors = -EIO;
 	blk_mq_complete_request(cmd->rq);
+	if (cmd->per_work_io)
+		atomic_dec(&lo->pending_per_work_io);
 }
 
 static void loop_queue_write_work(struct work_struct *work)
