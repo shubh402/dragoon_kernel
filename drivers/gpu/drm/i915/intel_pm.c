@@ -1898,16 +1898,24 @@ static void ilk_compute_wm_parameters(struct drm_crtc *crtc,
 	enum pipe pipe = intel_crtc->pipe;
 	struct drm_plane *plane;
 
-	if (!intel_crtc_active(crtc))
+	if (!intel_crtc->active)
 		return;
 
 	p->active = true;
 	p->pipe_htotal = intel_crtc->config->base.adjusted_mode.crtc_htotal;
 	p->pixel_rate = ilk_pipe_pixel_rate(dev, crtc);
-	p->pri.bytes_per_pixel = crtc->primary->fb->bits_per_pixel / 8;
+
+
+	if (crtc->primary->fb)
+		p->pri.bytes_per_pixel = crtc->primary->fb->bits_per_pixel / 8;
+	else
+		p->pri.bytes_per_pixel = 4;
+
 	p->cur.bytes_per_pixel = 4;
+
 	p->pri.horiz_pixels = intel_crtc->config->pipe_src_w;
-	p->cur.horiz_pixels = intel_crtc->cursor_width;
+	p->cur.horiz_pixels = intel_crtc->base.cursor->state->crtc_w;
+
 	/* TODO: for now, assume primary and cursor planes are always enabled. */
 	p->pri.enabled = true;
 	p->cur.enabled = true;
