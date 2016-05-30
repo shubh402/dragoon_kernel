@@ -4138,6 +4138,8 @@
 
 	pcbit=		[HW,ISDN]
 
+	pcbit=		[HW,ISDN]
+
 	pci=option[,option...]	[PCI] various PCI subsystem options.
 
 				Some options herein operate on a specific device
