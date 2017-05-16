@@ -1110,6 +1110,8 @@ compound_page_dtor *get_compound_page_dtor(struct folio *folio);
 
 void destroy_large_folio(struct folio *folio);
 
+void destroy_large_folio(struct folio *folio);
+
 static inline void set_compound_order(struct page *page, unsigned int order)
 {
 	struct folio *folio = (struct folio *)page;
