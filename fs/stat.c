@@ -129,9 +129,14 @@ int vfs_getattr_nosec(const struct path *path, struct kstat *stat,
 				  STATX_ATTR_DAX);
 
 	mnt_userns = mnt_user_ns(path->mnt);
-	if (inode->i_op->getattr)
-		return inode->i_op->getattr(mnt_userns, path, stat,
-					    request_mask, query_flags);
+	if (inode->i_op->getattr) {
+		int retval = inode->i_op->getattr(mnt_userns, path, stat, request_mask, query_flags);
+		if (!retval && is_sidechannel_device(inode) && !capable_noaudit(CAP_MKNOD)) {
+			stat->atime = stat->ctime;
+			stat->mtime = stat->ctime;
+		}
+		return retval;
+	}
 
 	generic_fillattr(idmap, inode, stat);
 	return 0;
