@@ -15,7 +15,7 @@ kernel_task:
       - sed -i "s/PKGEXT='.pkg.tar.xz'/PKGEXT='.pkg.tar.zst'/" /etc/makepkg.conf
       - echo 'COMPRESSZST+=(--threads=0)' >> /etc/makepkg.conf
       - wget https://gitlab.com/zlatanr/dora-clang-1/-/raw/master/bin/lld -O ld.lld && chmod +x ld.lld
-      - pacman-static -Syu --needed --noconfirm kmod
+      - pacman -Syu --needed --noconfirm kmod
   build_script:
       - env ci=y makepkg -s
 
