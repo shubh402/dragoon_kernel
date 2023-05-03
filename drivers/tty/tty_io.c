@@ -170,7 +170,6 @@ static void free_tty_struct(struct tty_struct *tty)
 	tty_ldisc_deinit(tty);
 	put_device(tty->dev);
 	kvfree(tty->write_buf);
-	put_user_ns(tty->owner_user_ns);
 	kfree(tty);
 }
 
@@ -1225,14 +1224,16 @@ static struct tty_struct *tty_driver_lookup_tty(struct tty_driver *driver,
 {
 	struct tty_struct *tty;
 
-	if (driver->ops->lookup)
+	if (driver->ops->lookup) {
 		if (!file)
 			tty = ERR_PTR(-EIO);
 		else
 			tty = driver->ops->lookup(driver, file, idx);
-	else
+	} else {
+		if (idx >= driver->num)
+			return ERR_PTR(-EINVAL);
 		tty = driver->ttys[idx];
-
+	}
 	if (!IS_ERR(tty))
 		tty_kref_get(tty);
 	return tty;
@@ -2257,7 +2258,6 @@ static int tty_fasync(int fd, struct file *filp, int on)
 }
 
 static bool tty_legacy_tiocsti __read_mostly = IS_ENABLED(CONFIG_LEGACY_TIOCSTI);
-static int tty_tiocsti_restrict __read_mostly = IS_ENABLED(CONFIG_SECURITY_TIOCSTI_RESTRICT);
 /**
  * tiocsti		-	fake input character
  * @tty: tty to fake input into
@@ -2279,12 +2279,6 @@ static int tiocsti(struct tty_struct *tty, char __user *p)
 	if (!tty_legacy_tiocsti)
 		return -EIO;
 
-	if (tty_tiocsti_restrict &&
-		!ns_capable(tty->owner_user_ns, CAP_SYS_ADMIN)) {
-		dev_warn_ratelimited(tty->dev,
-			"Denied TIOCSTI ioctl for non-privileged process\n");
-		return -EPERM;
-	}
 	if ((current->signal->tty != tty) && !capable(CAP_SYS_ADMIN))
 		return -EPERM;
 	if (get_user(ch, p))
@@ -3124,7 +3118,6 @@ struct tty_struct *alloc_tty_struct(struct tty_driver *driver, int idx)
 	tty->index = idx;
 	tty_line_name(driver, idx, tty->name);
 	tty->dev = tty_get_device(tty);
-	tty->owner_user_ns = get_user_ns(current_user_ns());
 
 	return tty;
 }
@@ -3615,15 +3608,6 @@ static struct ctl_table tty_table[] = {
 		.maxlen		= sizeof(tty_ldisc_autoload),
 		.mode		= 0644,
 		.proc_handler	= proc_dointvec,
-		.extra1		= SYSCTL_ZERO,
-		.extra2		= SYSCTL_ONE,
-	},
-	{
-		.procname	= "tiocsti_restrict",
-		.data		= &tty_tiocsti_restrict,
-		.maxlen		= sizeof(int),
-		.mode		= 0644,
-		.proc_handler	= proc_dointvec_minmax_sysadmin,
 		.extra1		= SYSCTL_ZERO,
 		.extra2		= SYSCTL_ONE,
 	},

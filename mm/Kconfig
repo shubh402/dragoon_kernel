@@ -191,6 +191,25 @@ config ZSMALLOC_STAT
 	  information to userspace via debugfs.
 	  If unsure, say N.
 
+config ZSMALLOC_CHAIN_SIZE
+	int "Maximum number of physical pages per-zspage"
+	default 8
+	range 4 16
+	depends on ZSMALLOC
+	help
+	  This option sets the upper limit on the number of physical pages
+	  that a zmalloc page (zspage) can consist of. The optimal zspage
+	  chain size is calculated for each size class during the
+	  initialization of the pool.
+
+	  Changing this option can alter the characteristics of size classes,
+	  such as the number of pages per zspage and the number of objects
+	  per zspage. This can also result in different configurations of
+	  the pool, as zsmalloc merges size classes with similar
+	  characteristics.
+
+	  For more information, see zsmalloc documentation.
+
 menu "SLAB allocator options"
 
 choice
@@ -258,6 +277,7 @@ config SLUB_TINY
 
 config SLAB_MERGE_DEFAULT
 	bool "Allow slab caches to be merged"
+	default y
 	depends on SLAB || SLUB
 	help
 	  For reduced kernel memory fragmentation, slab caches can be
@@ -273,7 +293,6 @@ config SLAB_MERGE_DEFAULT
 config SLAB_FREELIST_RANDOM
 	bool "Randomize slab freelist"
 	depends on SLAB || (SLUB && !SLUB_TINY)
-	default y
 	help
 	  Randomizes the freelist order used on creating new pages. This
 	  security feature reduces the predictability of the kernel slab
@@ -282,7 +301,6 @@ config SLAB_FREELIST_RANDOM
 config SLAB_FREELIST_HARDENED
 	bool "Harden slab freelist metadata"
 	depends on SLAB || (SLUB && !SLUB_TINY)
-	default y
 	help
 	  Many kernel heap attacks try to target slab cache metadata and
 	  other infrastructure. This options makes minor performance
@@ -290,23 +308,6 @@ config SLAB_FREELIST_HARDENED
 	  freelist exploit methods. Some slab implementations have more
 	  sanity-checking than others. This option is most effective with
 	  CONFIG_SLUB.
-
-config SLAB_CANARY
-	depends on SLUB
-	depends on !SLAB_MERGE_DEFAULT
-	bool "SLAB canaries"
-	default y
-	help
-	  Place canaries at the end of kernel slab allocations, sacrificing
-	  some performance and memory usage for security.
-
-	  Canaries can detect some forms of heap corruption when allocations
-	  are freed and as part of the HARDENED_USERCOPY feature. It provides
-	  basic use-after-free detection for HARDENED_USERCOPY.
-
-	  Canaries absorb small overflows (rendering them harmless), mitigate
-	  non-NUL terminated C string overflows on 64-bit via a guaranteed zero
-	  byte and provide basic double-free detection.
 
 config SLUB_STATS
 	default n
@@ -360,6 +361,7 @@ config SHUFFLE_PAGE_ALLOCATOR
 
 config COMPAT_BRK
 	bool "Disable heap randomization"
+	default y
 	help
 	  Randomizing heap placement makes heap exploits harder, but it
 	  also breaks ancient binaries (including anything libc5 based).
@@ -705,8 +707,7 @@ config KSM
 config DEFAULT_MMAP_MIN_ADDR
 	int "Low address space to protect from user allocation"
 	depends on MMU
-	default 32768 if ARM || (ARM64 && COMPAT)
-	default 65536
+	default 4096
 	help
 	  This is the portion of low virtual memory which should be protected
 	  from userspace allocation.  Keeping a user from writing to low pages
@@ -1091,7 +1092,7 @@ config GUP_TEST
 	  pin_user_pages*(), or pinned via get_user_pages*(), as specified
 	  by other command line arguments.
 
-	  See tools/testing/selftests/vm/gup_test.c
+	  See tools/testing/selftests/mm/gup_test.c
 
 comment "GUP_TEST needs to have DEBUG_FS enabled"
 	depends on !GUP_TEST && !DEBUG_FS

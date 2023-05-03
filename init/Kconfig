@@ -449,7 +449,6 @@ config USELIB
 config AUDIT
 	bool "Auditing support"
 	depends on NET
-	default y
 	help
 	  Enable auditing infrastructure that can be used with another
 	  kernel subsystem, such as SELinux (which requires this for
@@ -683,10 +682,6 @@ config CPU_ISOLATION
 
 source "kernel/rcu/Kconfig"
 
-config BUILD_BIN2C
-	bool
-	default n
-
 config IKCONFIG
 	tristate "Kernel .config support"
 	help
@@ -895,18 +890,14 @@ config CC_IMPLICIT_FALLTHROUGH
 	default "-Wimplicit-fallthrough=5" if CC_IS_GCC && $(cc-option,-Wimplicit-fallthrough=5)
 	default "-Wimplicit-fallthrough" if CC_IS_CLANG && $(cc-option,-Wunreachable-code-fallthrough)
 
-# Currently, disable gcc-11,12 array-bounds globally.
-# We may want to target only particular configurations some day.
+# Currently, disable gcc-11+ array-bounds globally.
+# It's still broken in gcc-13, so no upper bound yet.
 config GCC11_NO_ARRAY_BOUNDS
-	def_bool y
-
-config GCC12_NO_ARRAY_BOUNDS
 	def_bool y
 
 config CC_NO_ARRAY_BOUNDS
 	bool
-	default y if CC_IS_GCC && GCC_VERSION >= 110000 && GCC_VERSION < 120000 && GCC11_NO_ARRAY_BOUNDS
-	default y if CC_IS_GCC && GCC_VERSION >= 120000 && GCC_VERSION < 130000 && GCC12_NO_ARRAY_BOUNDS
+	default y if CC_IS_GCC && GCC_VERSION >= 110000 && GCC11_NO_ARRAY_BOUNDS
 
 #
 # For architectures that know their GCC __int128 support is sound
@@ -1045,6 +1036,10 @@ config RT_GROUP_SCHED
 	  See Documentation/scheduler/sched-rt-group.rst for more information.
 
 endif #CGROUP_SCHED
+
+config SCHED_MM_CID
+	def_bool y
+	depends on SMP && RSEQ
 
 config UCLAMP_TASK_GROUP
 	bool "Utilization clamping per group of tasks"
@@ -1254,22 +1249,6 @@ config USER_NS
 
 	  If unsure, say N.
 
-config USER_NS_UNPRIVILEGED
-	bool "Allow unprivileged users to create namespaces"
-	depends on USER_NS
-	default n
-	help
-	  When disabled, unprivileged users will not be able to create
-	  new namespaces. Allowing users to create their own namespaces
-	  has been part of several recent local privilege escalation
-	  exploits, so if you need user namespaces but are
-	  paranoid^Wsecurity-conscious you want to disable this.
-
-	  This setting can be overridden at runtime via the
-	  kernel.unprivileged_userns_clone sysctl.
-
-	  If unsure, say N.
-
 config PID_NS
 	bool "PID Namespaces"
 	default y
@@ -1396,6 +1375,19 @@ config BOOT_CONFIG
 	  See <file:Documentation/admin-guide/bootconfig.rst> for details.
 
 	  If unsure, say Y.
+
+config BOOT_CONFIG_FORCE
+	bool "Force unconditional bootconfig processing"
+	depends on BOOT_CONFIG
+	default y if BOOT_CONFIG_EMBED
+	help
+	  With this Kconfig option set, BOOT_CONFIG processing is carried
+	  out even when the "bootconfig" kernel-boot parameter is omitted.
+	  In fact, with this Kconfig option set, there is no way to
+	  make the kernel ignore the BOOT_CONFIG-supplied kernel-boot
+	  parameters.
+
+	  If unsure, say N.
 
 config BOOT_CONFIG_EMBED
 	bool "Embed bootconfig file in the kernel"
@@ -1530,8 +1522,9 @@ menuconfig EXPERT
 	  Only use this if you really know what you are doing.
 
 config UID16
-	bool "Enable 16-bit UID system calls"
+	bool "Enable 16-bit UID system calls" if EXPERT
 	depends on HAVE_UID16 && MULTIUSER
+	default y
 	help
 	  This enables the legacy 16-bit UID syscall wrappers.
 
@@ -1560,13 +1553,14 @@ config SGETMASK_SYSCALL
 	  If unsure, leave the default option here.
 
 config SYSFS_SYSCALL
-	bool "Sysfs syscall support"
+	bool "Sysfs syscall support" if EXPERT
+	default y
 	help
 	  sys_sysfs is an obsolete system call no longer supported in libc.
 	  Note that disabling this option is more secure but might break
 	  compatibility with some systems.
 
-	  If unsure say N here.
+	  If unsure say Y here.
 
 config FHANDLE
 	bool "open by fhandle syscalls" if EXPERT
@@ -1705,7 +1699,8 @@ config SHMEM
 	  which may be appropriate on small systems without swap.
 
 config AIO
-	bool "Enable AIO support"
+	bool "Enable AIO support" if EXPERT
+	default y
 	help
 	  This option enables POSIX asynchronous I/O which may by used
 	  by some high performance threaded applications. Disabling
@@ -1883,7 +1878,6 @@ config PERF_EVENTS
 	default y if PROFILING
 	depends on HAVE_PERF_EVENTS
 	select IRQ_WORK
-	select SRCU
 	help
 	  Enable kernel support for various performance events provided
 	  by software and hardware.
@@ -1953,7 +1947,7 @@ config RUST
 	depends on !MODVERSIONS
 	depends on !GCC_PLUGINS
 	depends on !RANDSTRUCT
-	depends on !DEBUG_INFO_BTF
+	depends on !DEBUG_INFO_BTF || PAHOLE_HAS_LANG_EXCLUDE
 	select CONSTRUCTORS
 	help
 	  Enables Rust support in the kernel.

@@ -22,13 +22,6 @@
 #include <linux/bsearch.h>
 #include <linux/sort.h>
 
-/* sysctl */
-#ifdef CONFIG_USER_NS_UNPRIVILEGED
-int unprivileged_userns_clone = 1;
-#else
-int unprivileged_userns_clone;
-#endif
-
 static struct kmem_cache *user_ns_cachep __read_mostly;
 static DEFINE_MUTEX(userns_state_mutex);
 
@@ -236,7 +229,7 @@ void __put_user_ns(struct user_namespace *ns)
 EXPORT_SYMBOL(__put_user_ns);
 
 /**
- * idmap_key struct holds the information necessary to find an idmapping in a
+ * struct idmap_key - holds the information necessary to find an idmapping in a
  * sorted idmap array. It is passed to cmp_map_id() as first argument.
  */
 struct idmap_key {

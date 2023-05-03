@@ -1225,7 +1225,8 @@ config VM86
 	default X86_LEGACY_VM86
 
 config X86_16BIT
-	bool "Enable support for 16-bit segments"
+	bool "Enable support for 16-bit segments" if EXPERT
+	default y
 	depends on MODIFY_LDT_SYSCALL
 	help
 	  This option is required by programs like Wine to run 16-bit
@@ -1501,7 +1502,7 @@ config X86_5LEVEL
 	depends on X86_64
 	help
 	  5-level paging enables access to larger address space:
-	  upto 128 PiB of virtual address space and 4 PiB of
+	  up to 128 PiB of virtual address space and 4 PiB of
 	  physical address space.
 
 	  It will be supported by future Intel CPUs.
@@ -2364,7 +2365,7 @@ config COMPAT_VDSO
 choice
 	prompt "vsyscall table for legacy applications"
 	depends on X86_64
-	default LEGACY_VSYSCALL_NONE
+	default LEGACY_VSYSCALL_XONLY
 	help
 	  Legacy user code that does not know how to find the vDSO expects
 	  to be able to issue three syscalls by calling fixed addresses in
@@ -2448,7 +2449,8 @@ config CMDLINE_OVERRIDE
 	  be set to 'N' under normal conditions.
 
 config MODIFY_LDT_SYSCALL
-	bool "Enable the LDT (local descriptor table)"
+	bool "Enable the LDT (local descriptor table)" if EXPERT
+	default y
 	help
 	  Linux can allow user programs to install a per-process x86
 	  Local Descriptor Table (LDT) using the modify_ldt(2) system
@@ -2607,8 +2609,8 @@ config CALL_THUNKS_DEBUG
 	  a noisy dmesg about callthunks generation and call patching for
 	  trouble shooting. The debug prints need to be enabled on the
 	  kernel command line with 'debug-callthunks'.
-	  Only enable this, when you are debugging call thunks as this
-	  creates a noticable runtime overhead. If unsure say N.
+	  Only enable this when you are debugging call thunks as this
+	  creates a noticeable runtime overhead. If unsure say N.
 
 config CPU_IBPB_ENTRY
 	bool "Enable IBPB on kernel entry"

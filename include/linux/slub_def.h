@@ -125,11 +125,6 @@ struct kmem_cache {
 	unsigned long random;
 #endif
 
-#ifdef CONFIG_SLAB_CANARY
-	unsigned long random_active;
-	unsigned long random_inactive;
-#endif
-
 #ifdef CONFIG_NUMA
 	/*
 	 * Defragmentation by allocating from a remote node.
@@ -141,7 +136,7 @@ struct kmem_cache {
 	unsigned int *random_seq;
 #endif
 
-#ifdef CONFIG_KASAN
+#ifdef CONFIG_KASAN_GENERIC
 	struct kasan_cache kasan_info;
 #endif
 

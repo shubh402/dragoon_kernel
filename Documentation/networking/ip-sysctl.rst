@@ -50,7 +50,7 @@ ip_no_pmtu_disc - INTEGER
 	Default: FALSE
 
 min_pmtu - INTEGER
-	default 552 - minimum Path MTU. Unless this is changed mannually,
+	default 552 - minimum Path MTU. Unless this is changed manually,
 	each cached pmtu will never be lower than this setting.
 
 ip_forward_use_pmtu - BOOLEAN
@@ -155,6 +155,9 @@ route/max_size - INTEGER
 
 	From linux kernel 3.6 onwards, this is deprecated for ipv4
 	as route cache is no longer used.
+
+	From linux kernel 6.3 onwards, this is deprecated for ipv6
+	as garbage collection manages cached route entries.
 
 neigh/default/gc_thresh1 - INTEGER
 	Minimum number of entries to keep.  Garbage collector will not
@@ -336,6 +339,8 @@ tcp_allowed_congestion_control - STRING
 tcp_app_win - INTEGER
 	Reserve max(window/2^tcp_app_win, mss) of window for application
 	buffer. Value 0 is special, it means that nothing is reserved.
+
+	Possible values are [0, 31], inclusive.
 
 	Default: 31
 
@@ -738,24 +743,6 @@ tcp_comp_sack_nr - INTEGER
 	Using 0 disables SACK compression.
 
 	Default : 44
-
-tcp_simult_connect - BOOLEAN
-	Enable TCP simultaneous connect that adds a weakness in Linux's strict
-	implementation of TCP that allows two clients to connect to each other
-	without either entering a listening state. The weakness allows an attacker
-	to easily prevent a client from connecting to a known server provided the
-	source port for the connection is guessed correctly.
-
-	As the weakness could be used to prevent an antivirus or IPS from fetching
-	updates, or prevent an SSL gateway from fetching a CRL, it should be
-	eliminated by disabling this option. Though Linux is one of few operating
-	systems supporting simultaneous connect, it has no legitimate use in
-	practice and is rarely supported by firewalls.
-
-	Disabling this may break TCP STUNT which is used by some applications for
-	NAT traversal.
-
-	Default: Value of CONFIG_TCP_SIMULT_CONNECT_DEFAULT_ON
 
 tcp_slow_start_after_idle - BOOLEAN
 	If set, provide RFC2861 behavior and time out the congestion
@@ -1607,6 +1594,14 @@ proxy_arp_pvlan - BOOLEAN
 	  Hewlett-Packard call it Source-Port filtering or port-isolation.
 	  Ericsson call it MAC-Forced Forwarding (RFC Draft).
 
+proxy_delay - INTEGER
+	Delay proxy response.
+
+	Delay response to a neighbor solicitation when proxy_arp
+	or proxy_ndp is enabled. A random value between [0, proxy_delay)
+	will be chosen, setting to zero means reply with no delay.
+	Value in jiffies. Defaults to 80.
+
 shared_media - BOOLEAN
 	Send(router) or accept(host) RFC1620 shared media redirects.
 	Overrides secure_redirects.
@@ -2093,7 +2088,7 @@ skip_notify_on_dev_down - BOOLEAN
 
 nexthop_compat_mode - BOOLEAN
 	New nexthop API provides a means for managing nexthops independent of
-	prefixes. Backwards compatibilty with old route format is enabled by
+	prefixes. Backwards compatibility with old route format is enabled by
 	default which means route dumps and notifications contain the new
 	nexthop attribute but also the full, expanded nexthop definition.
 	Further, updates or deletes of a nexthop configuration generate route
@@ -2826,7 +2821,7 @@ pf_expose - INTEGER
 	can be got via SCTP_GET_PEER_ADDR_INFO sockopt;  When it's enabled,
 	a SCTP_PEER_ADDR_CHANGE event will be sent for a transport becoming
 	SCTP_PF state and a SCTP_PF-state transport info can be got via
-	SCTP_GET_PEER_ADDR_INFO sockopt;  When it's diabled, no
+	SCTP_GET_PEER_ADDR_INFO sockopt;  When it's disabled, no
 	SCTP_PEER_ADDR_CHANGE event will be sent and it returns -EACCES when
 	trying to get a SCTP_PF-state transport info via SCTP_GET_PEER_ADDR_INFO
 	sockopt.
