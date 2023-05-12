@@ -557,7 +557,6 @@
 			Format: <string>
 			nosocket -- Disable socket memory accounting.
 			nokmem -- Disable kernel memory accounting.
-			nobpf -- Disable BPF memory accounting.
 
 	cio_ignore=	[S390]
 			See Documentation/s390/common_io.rst for details.
