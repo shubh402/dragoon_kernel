@@ -30,6 +30,7 @@
 #include <linux/stackdepot.h>
 #include <linux/debugobjects.h>
 #include <linux/kallsyms.h>
+#include <linux/kernel/debug/sanitizers.h>
 #include <linux/kfence.h>
 #include <linux/memory.h>
 #include <linux/math64.h>
